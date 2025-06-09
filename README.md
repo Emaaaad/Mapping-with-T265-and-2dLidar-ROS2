@@ -3,21 +3,21 @@
 
 first of all we need to build our docker(this is just for first time):
 
-
+```
 -- docker build -f ros2_slam.dockerfile -t ros2_slam .
-
+```
 
 
 then: 
 
-
+```
 -- xhost +local:root
-
+```
 
 and then we should run our builded docker: 
 
 
-
+```
 docker run --rm -it \
   --name ros2_slam_gui \
   --privileged \
@@ -29,31 +29,32 @@ docker run --rm -it \
   -v ~/ros2_ws/mapping_docker:/ros2_ws/src/mapping_docker \
   --device=/dev/bus/usb/004/006 \
   ros2_slam
-
+```
 
 
 
 
 and then for launch the mapping:
 
+```
 source /opt/ros/humble/setup.bash
 source /ros2_ws/install/setup.bash
-
+```
+```
 cd /ros2_ws
 colcon build --packages-select mapping_docker
 source install/setup.bash
+```
+and for final step we need to run our launch file: 
 
+```
 ros2 launch mapping_docker slam.launch.py
-
+```
 ------------------------------------------------------------------------------------
 
 if you get this following error you have to launch the node again
 
-Message Filter dropping message: frame 'odom' at time  for reason 'discarding message because the queue is full'
-
-
-
-
+*** Message Filter dropping message: frame 'odom' at time  for reason 'discarding message because the queue is full' ***
 
 ------------------------------------------------------------------------------------
 
