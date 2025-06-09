@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>mapping_docker</name>
+  <version>0.0.1</version>
+  <description>Launch and configuration files for the RealSense T265 + URG-04LX SLAM stack inside Docker.</description>
+
+  <!-- Who maintains this package -->
+  <maintainer email="you@example.com">Your Name</maintainer>
+
+  <!-- License of the *launch/config* files themselves -->
+  <license>Apache 2.0</license>
+
+  <!-- Only ament_cmake is needed to “build” (i.e. install) the files -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Runtime dependencies referenced from launch files -->
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>realsense2_camera</exec_depend>
+  <exec_depend>urg_node2</exec_depend>
+  <exec_depend>robot_localization</exec_depend>
+  <exec_depend>slam_toolbox</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+
+  <!-- Export so that other packages can find our launch/config resources -->
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
