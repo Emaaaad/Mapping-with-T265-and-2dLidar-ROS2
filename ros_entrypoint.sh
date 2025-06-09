@@ -1,5 +1,6 @@
 #!/bin/bash
-set -e                                # stop on first error
+set -e                               
+
 
 # Source ROS 2 and your workspace
 source "/opt/ros/$ROS_DISTRO/setup.bash"

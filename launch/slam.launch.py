@@ -4,14 +4,9 @@ from launch.actions import IncludeLaunchDescription, ExecuteProcess
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
-# ➜ ADD / KEEP THIS LINE
 from launch_ros.substitutions import FindPackageShare   
 
 from launch.substitutions import PathJoinSubstitution
-
-
-
-
 
 
 
@@ -28,7 +23,7 @@ def generate_launch_description():
     realsense = Node(
         package='realsense2_camera',
         executable='realsense2_camera_node',
-        namespace='',                    # ← optional, but explicit
+        namespace='',                  
         name='t265',
         output='screen',
         parameters=[{
@@ -39,7 +34,7 @@ def generate_launch_description():
             'publish_odom_tf':    False,
 
             'base_frame_id':      'base_link',   # physical IMU frame
-            'pose_frame_id':      't265_pose',   # make odom point *directly* to base_link
+            'pose_frame_id':      't265_pose',   
             'odom_frame_id':      'odom'
         }]
     )

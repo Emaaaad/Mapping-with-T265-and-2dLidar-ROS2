@@ -21,8 +21,6 @@ RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key | a
     echo "deb http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2.list
 
 
-# make sure the regular Ubuntu mirrors are reachable
-#     (add a couple of retries so transient network hiccups don't break the build)
 RUN for i in 1 2 3 ; do \
         apt-get update && break || sleep 5 ; \
     done
@@ -51,7 +49,6 @@ RUN mkdir build && cd build && \
     cmake ../ -DBUILD_EXAMPLES=false -DCMAKE_BUILD_TYPE=Release -DBUILD_GRAPHICAL_EXAMPLES=false && \
     make -j$(nproc) && make install
 
-    # ─── inside the librealsense stage (after `make install`) ───
 RUN mkdir -p /etc/udev/rules.d && \
     ./scripts/setup_udev_rules.sh
 
@@ -65,7 +62,7 @@ WORKDIR /ros2_ws/src
 # Intel RealSense ROS wrapper
 RUN git clone https://github.com/IntelRealSense/realsense-ros.git -b 3.2.3
 
-# Copy custom sources for RealSense (if you have them ready alongside Dockerfile)
+# Copy custom sources for RealSense 
 COPY src/ realsense-ros/realsense2_camera/src/
 COPY include/ realsense-ros/realsense2_camera/include/
 COPY CMakeLists_docker.txt realsense-ros/realsense2_camera/CMakeLists.txt
