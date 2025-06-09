@@ -54,7 +54,7 @@ ros2 launch mapping_docker slam.launch.py
 
 if you get this following error you have to launch the node again
 
-*** Message Filter dropping message: frame 'odom' at time  for reason 'discarding message because the queue is full' ***
+** Message Filter dropping message: frame 'odom' at time  for reason 'discarding message because the queue is full' **
 
 ------------------------------------------------------------------------------------
 
