@@ -1,27 +1,30 @@
-# Mapping-with-T265-and-2D-Lidar (ROS 2 Humble)
+# Mapping‑with‑T265‑and‑2D‑Lidar (ROS 2)
 
-This repo shows how to generate a **live 2‑D map** using an **Intel RealSense T265** (odometry) and a **Hokuyo URG‑04LX** (laser scans), all inside a single Docker container.
+> **What is this?** A minimal end‑to‑end SLAM stack that fuses **Intel® RealSense T265** visual‑inertial odometry with any **2‑D lidar** (we ship examples for a Hokuyo URG‑04LX, but any laser scanner that publishes a standard `sensor_msgs/LaserScan` will work).  Everything runs inside a self‑contained **Docker** image based on ROS 2 Humble, so you can deploy on a NUC, Jetson or plain laptop without touching the host filesystem.
+>
+> **Why docker?** • identical dev/runtime environment • quick rollback • easy to copy to other robots • avoids host‑level driver headaches.  If you prefer running natively, just install the same ROS 2 packages and copy the `mapping_docker` workspace – the launch files don’t care whether they run in a container or on bare metal.
+>
+> **Hardware tested**
+>
+> * Intel RealSense T265 (USB‑C)
+> * Hokuyo URG‑04LX (USB serial)
+> * Intel NUC 11 running Ubuntu 20.04 host, container uses Ubuntu 22.04 base
+>
+> **Works with other lidars** – just adapt the static TF (`base_link → laser`) and the `/scan` topic; no changes to ekf / slam\_toolbox required.
 
 ---
 
-## 1 · Build the Docker image (only once)
+## 1 ▪ Build the Docker image (first time only)
 
 ```bash
 cd ~/ros2_ws/mapping_docker
+xhost +local:root              # allow the container to talk to your X server
+
+# one‑time build (~15 min on first run)
 docker build -f ros2_slam.dockerfile -t ros2_slam .
 ```
 
----
-
-## 2 · Allow X11 output (for RViz)
-
-```bash
-xhost +local:root   # run on the host
-```
-
----
-
-## 3 · Run the container
+## 2 ▪ Run the container
 
 ```bash
 docker run --rm -it \
@@ -37,30 +40,64 @@ docker run --rm -it \
   ros2_slam
 ```
 
-The prompt switches to `root@…:/ros2_ws`. All further commands happen **inside the container**.
+*Adjust `--device` for your laser (e.g. `/dev/ttyACM0`) and camera if needed.*
 
----
-
-## 4 · Build & source the workspace (first run only)
+## 3 ▪ Build the workspace inside the container (first run only)
 
 ```bash
 source /opt/ros/humble/setup.bash
 cd /ros2_ws
-colcon build --packages-select mapping_docker   # builds in seconds
+colcon build --packages-select mapping_docker
 source install/setup.bash
 ```
 
----
-
-## 5 · Launch the full mapping stack
+## 4 ▪ Launch the full stack
 
 ```bash
 ros2 launch mapping_docker slam.launch.py
 ```
 
-RViz opens showing laser scans, SLAM map, TF tree, and EKF odometry.
+RViz opens automatically with a pre‑configured view.  Drive the robot – the occupancy grid (`/map`) will update in real time.
 
 ---
+
+### Troubleshooting
+
+| Symptom                                                             | Quick fix                                                                                                                                                                              |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`Message Filter dropping message: frame 'odom' … queue is full`** | Restart `slam_toolbox` (or just relaunch step 4). Happens if TF tree is incomplete at startup.                                                                                         |
+| **Map does not grow / stays blank**                                 | Check `/scan` and `/odometry/filtered` are publishing (`ros2 topic hz …`). Verify `t265_pose → base_link` and `base_link → laser` static TFs exist (`ros2 run tf2_tools view_frames`). |
+| **Authentication error when pushing to GitHub**                     | Use a personal access token instead of a password (see GitHub docs).                                                                                                                   |
+
+---
+
+### Optional ▪ Run nodes manually (debugging)
+
+Open **six terminals** inside the container (`docker exec -it ros2_slam_gui bash`) and in each:
+
+```bash
+# 1 T265 driver
+ros2 run realsense2_camera realsense2_camera_node \
+   --ros-args -p enable_pose:=true -p publish_odom_tf:=true \
+   -p base_frame_id:=base_link -p odom_frame_id:=odom
+
+# 2 Lidar driver
+ros2 launch urg_node2 urg_node2.launch.py serial_port:=/dev/ttyACM0
+
+# 3 Static TFs
+ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 odom base_link
+ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 1 base_link laser
+
+# 4 EKF
+ros2 launch robot_localization ekf.launch.py params_file:=/ros2_ws/config/ekf.yaml
+
+# 5 SLAM Toolbox
+ros2 launch slam_toolbox online_async_launch.py \
+   slam_params_file:=/ros2_ws/config/slam_toolbox_params.yaml
+
+# 6 RViz
+rviz2 -d /ros2_ws/config/slam_setup.rviz
+```
 
 ### Troubleshooting
 
@@ -73,42 +110,7 @@ RViz opens showing laser scans, SLAM map, TF tree, and EKF odometry.
 
 ---
 
-### (Optional) Manual single‑node launches
-
-For debugging you can start each part in its own terminal (inside the container, after sourcing the setup files):
-
-```bash
-# 1 RealSense T265 pose
-a ros2 run realsense2_camera realsense2_camera_node \
-     --ros-args -p enable_pose:=true \
-                -p publish_odom_tf:=true \
-                -p base_frame_id:=base_link \
-                -p odom_frame_id:=odom
-
-# 2 Hokuyo lidar driver
-ros2 launch urg_node2 urg_node2.launch.py serial_port:=/dev/ttyACM0
-
-# 3 Static TF: odom → base_link
-ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 odom base_link
-
-# 4 Static TF: base_link → laser
-ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 1 base_link laser
-
-# 5 EKF
-ros2 launch robot_localization ekf.launch.py \
-     params_file:=/ros2_ws/config/ekf.yaml
-
-# 6 SLAM Toolbox
-ros2 launch slam_toolbox online_async_launch.py \
-     slam_params_file:=/ros2_ws/config/slam_toolbox_params.yaml
-```
-
----
-
-
----
-
-# Remote‑mapping NUC ↔ Laptop  – SSH & ROS 2 Network Cheat‑Sheet
+## Remote‑mapping NUC ↔ Laptop – SSH & ROS 2 Network Cheat‑Sheet
 
 ---
 
