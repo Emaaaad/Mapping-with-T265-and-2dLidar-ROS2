@@ -4,7 +4,7 @@ This repo shows how to generate a **live 2‑D map** using an **Intel RealSens
 
 ---
 
-## 1 · Build the Docker image (only once)
+## 1 · Build the Docker image (only once)
 
 ```bash
 cd ~/ros2_ws/mapping_docker
@@ -13,7 +13,7 @@ docker build -f ros2_slam.dockerfile -t ros2_slam .
 
 ---
 
-## 2 · Allow X11 output (for RViz)
+## 2 · Allow X11 output (for RViz)
 
 ```bash
 xhost +local:root   # run on the host
@@ -21,7 +21,7 @@ xhost +local:root   # run on the host
 
 ---
 
-## 3 · Run the container
+## 3 · Run the container
 
 ```bash
 docker run --rm -it \
@@ -41,7 +41,7 @@ The prompt switches to `root@…:/ros2_ws`. All further commands happen **inside
 
 ---
 
-## 4 · Build & source the workspace (first run only)
+## 4 · Build & source the workspace (first run only)
 
 ```bash
 source /opt/ros/humble/setup.bash
@@ -52,7 +52,7 @@ source install/setup.bash
 
 ---
 
-## 5 · Launch the full mapping stack
+## 5 · Launch the full mapping stack
 
 ```bash
 ros2 launch mapping_docker slam.launch.py
@@ -62,7 +62,7 @@ RViz opens showing laser scans, SLAM map, TF tree, and EKF odometry.
 
 ---
 
-\### Troubleshooting
+### Troubleshooting
 
 |  Symptom                                            |  Likely cause & quick fix                                                                             |
 | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
