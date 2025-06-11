@@ -73,7 +73,7 @@ RViz opens showing laser scans, SLAM map, TF tree, and EKF odometry.
 
 ---
 
-## (Optional) Manual single‑node launches
+### (Optional) Manual single‑node launches
 
 For debugging you can start each part in its own terminal (inside the container, after sourcing the setup files):
 
