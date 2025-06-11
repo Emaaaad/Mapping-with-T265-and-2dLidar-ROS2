@@ -1,23 +1,29 @@
-# Mapping-with-T265-and-2dLidar-ROS2
+# Mapping-with-T265-and-2D-Lidar (ROS 2 Humble)
 
+This repo shows how to generate a **live 2‑D map** using an **Intel RealSense T265** (odometry) and a **Hokuyo URG‑04LX** (laser scans), all inside a single Docker container.
 
-first of all we need to build our docker(this is just for first time):
+---
 
-```
--- docker build -f ros2_slam.dockerfile -t ros2_slam .
-```
+\## 1 · Build the Docker image (only once)
 
-
-then: 
-
-```
--- xhost +local:root
+```bash
+cd ~/ros2_ws/mapping_docker
+docker build -f ros2_slam.dockerfile -t ros2_slam .
 ```
 
-and then we should run our builded docker: 
+---
 
+\## 2 · Allow X11 output (for RViz)
 
+```bash
+xhost +local:root   # run on the host
 ```
+
+---
+
+\## 3 · Run the container
+
+```bash
 docker run --rm -it \
   --name ros2_slam_gui \
   --privileged \
@@ -27,72 +33,77 @@ docker run --rm -it \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
   -v ~/ros2_ws/config:/ros2_ws/config:ro \
   -v ~/ros2_ws/mapping_docker:/ros2_ws/src/mapping_docker \
-  --device=/dev/bus/usb/004/006 \
+  --device /dev/bus/usb \  # or /dev/ttyACM0 only
   ros2_slam
 ```
 
+The prompt switches to `root@…:/ros2_ws`. All further commands happen **inside the container**.
 
+---
 
+\## 4 · Build & source the workspace (first run only)
 
-and then for launch the mapping:
-
-```
+```bash
 source /opt/ros/humble/setup.bash
-source /ros2_ws/install/setup.bash
-```
-```
 cd /ros2_ws
-colcon build --packages-select mapping_docker
+colcon build --packages-select mapping_docker   # builds in seconds
 source install/setup.bash
 ```
-and for final step we need to run our launch file: 
 
-```
+---
+
+\## 5 · Launch the full mapping stack
+
+```bash
 ros2 launch mapping_docker slam.launch.py
 ```
-------------------------------------------------------------------------------------
 
-if you get this following error you have to launch the node again
+RViz opens showing laser scans, SLAM map, TF tree, and EKF odometry.
 
-** Message Filter dropping message: frame 'odom' at time  for reason 'discarding message because the queue is full' **
+---
 
-------------------------------------------------------------------------------------
+\### Troubleshooting
 
+|  Symptom                                            |  Likely cause & quick fix                                                                             |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+|  `Message Filter dropping message … queue is full`  | SLAM Toolbox is waiting for TFs – just restart `slam.launch.py`.                                      |
+|  No GUI appears                                     | Ensure `xhost +local:root` ran **before** `docker run`, and `DISPLAY` & X11 volume flags are present. |
+|  "No RealSense devices were found"                  | Add `--privileged` **and** include the librealsense udev rule step in Dockerfile.                     |
+|  Device permission error                            | Mount the specific device: `--device /dev/ttyACM0` (Hokuyo) or keep `--device /dev/bus/usb`.          |
 
+---
 
+\## (Optional) Manual single‑node launches
 
-or we should have extra 6 terminal and:
+For debugging you can start each part in its own terminal (inside the container, after sourcing the setup files):
 
+```bash
+# 1 RealSense T265 pose
+a ros2 run realsense2_camera realsense2_camera_node \
+     --ros-args -p enable_pose:=true \
+                -p publish_odom_tf:=true \
+                -p base_frame_id:=base_link \
+                -p odom_frame_id:=odom
 
--- docker exec -it ros2_slam_gui bash
+# 2 Hokuyo lidar driver
+ros2 launch urg_node2 urg_node2.launch.py serial_port:=/dev/ttyACM0
 
+# 3 Static TF: odom → base_link
+ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 odom base_link
 
--- source /opt/ros/humble/setup.bash
- source /ros2_ws/install/setup.bash
- 
- 
- and then run this commands properly in each window: 
+# 4 Static TF: base_link → laser
+ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 1 base_link laser
 
+# 5 EKF
+ros2 launch robot_localization ekf.launch.py \
+     params_file:=/ros2_ws/config/ekf.yaml
 
--- ros2 run realsense2_camera realsense2_camera_node    --ros-args      -p enable_pose:=true      -p publish_odom_tf:=true      -p base_frame_id:=base_link      -p odom_frame_id:=odom
+# 6 SLAM Toolbox
+ros2 launch slam_toolbox online_async_launch.py \
+     slam_params_file:=/ros2_ws/config/slam_toolbox_params.yaml
+```
 
-
-
--- ros2 launch urg_node2 urg_node2.launch.py   serial_port:=/dev/ttyACM0 
-
-
--- ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 odom base_link
-
-
--- ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 1 base_link laser
-
-
-
--- ros2 launch robot_localization ekf.launch.py   params_file:=/ros2_ws/config/ekf.yaml
-
-
--- ros2 launch slam_toolbox online_async_launch.py   slam_params_file:=/ros2_ws/config/slam_toolbox_params.yaml
-
+---
 
 
 ---
