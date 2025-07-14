@@ -82,7 +82,33 @@ def generate_launch_description():
         parameters=[ekf_yaml]
     )
 
-
+    # ───────────── PointCloud → LaserScan ─────────────
+    cloud2scan = Node(
+        package='pointcloud_to_laserscan',
+        executable='pointcloud_to_laserscan_node',   # ← correct exec
+        name='pc2_to_scan',
+        remappings=[
+            ('cloud_in', '/velodyne_points'),        # ← put **your** cloud topic here
+            ('scan',     '/scan')
+        ],
+        parameters=[{
+            'output_frame':       'laser',           # frame of the produced scan
+            'target_frame':       'laser',           # where to express the ranges
+            'transform_tolerance': 0.01,
+            'min_height': -0.10,
+            'max_height':  0.10,
+            'angle_min':  -3.14159,
+            'angle_max':   3.14159,
+            'angle_increment': 0.00349,
+            'range_min': 0.1,
+            'range_max': 15.0,
+            'use_inf':   True,
+            'inf_epsilon': 1.0,
+            'use_sim_time': True 
+        }]
+    )
+    
+   
     # ───────────── SLAM Toolbox ─────────────
     slam = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -106,6 +132,7 @@ def generate_launch_description():
     return LaunchDescription([
         realsense,
         urg,
+        cloud2scan, 
         tf_t265_to_base,
         tf_base_to_laser,
         ekf,

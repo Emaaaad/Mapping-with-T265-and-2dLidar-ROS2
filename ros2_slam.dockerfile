@@ -16,9 +16,18 @@ RUN apt-get update && apt-get install -y \
 ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
 
-# ROS2 Humble sources
-RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key | apt-key add - && \
-    echo "deb http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2.list
+# ---------- ROS 2 apt repository (Jammy / Humble) ----------
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates gnupg curl lsb-release && \
+    mkdir -p /usr/share/keyrings && \
+    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+        | gpg --dearmor -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) \
+        signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \
+        http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
+        >/etc/apt/sources.list.d/ros2.list
+
 
 
 RUN for i in 1 2 3 ; do \
@@ -27,16 +36,20 @@ RUN for i in 1 2 3 ; do \
 
 
 # Install ROS2-specific packages (including colcon extensions)
-RUN apt-get install -y --no-install-recommends \
-        ros-humble-ros-base \   
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ros-humble-ros-base \
         ros-humble-slam-toolbox \
         ros-humble-robot-localization \
         ros-humble-tf2-tools \
         ros-humble-rviz2 \
+        ros-humble-pointcloud-to-laserscan \
+        ros-humble-xacro \
+        ros-humble-laser-proc \
+        libopencv-dev \
         python3-colcon-common-extensions \
         python3-rosdep \
     && rm -rf /var/lib/apt/lists/*
-
 
 RUN rosdep init || true && rosdep update
 

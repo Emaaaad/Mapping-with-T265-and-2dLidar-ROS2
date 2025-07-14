@@ -1,0 +1,20 @@
+ekf_filter_node:
+  ros__parameters:
+    frequency: 30.0
+    two_d_mode: true
+    publish_tf: true
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: odom
+
+    # ← the odometry topic stored in the bag
+    odom0: /kiss/odometry
+    odom0_config: [true, true, false,
+                   false, false, true,
+                   false, false, false,
+                   false, false, true,
+                   false, false, false]
+    use_sim_time:    true
+
+    

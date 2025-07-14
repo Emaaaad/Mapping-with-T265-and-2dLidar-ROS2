@@ -13,4 +13,9 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(PROGRAMS
+  src/static_relay.py
+  DESTINATION lib/${PROJECT_NAME})
+
+
 

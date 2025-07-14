@@ -16,32 +16,39 @@ slam_toolbox:
     scan_topic: /scan
     scan_queue_size: 1000
     use_map_saver: true
-    mode: mapping #localization
+    start_new_map: true 
+    mode: mapping 
+    rolling_window: true
+    sensor_data_queue_size: 1000 
+
+    provide_odom_frame:  false
+    use_odom_topic:      true    #subscribe to /odom  
 
     # if you'd like to immediately start continuing a map at a given pose
     # or at the dock, but they are mutually exclusive, if pose is given
     # will use pose
     #map_file_name: test_steve
-    # map_start_pose: [0.0, 0.0, 0.0]
-    #map_start_at_dock: true
+    map_start_pose: [0.0, 0.0, 0.0]
+    map_start_at_dock: true
 
     debug_logging: false
-    throttle_scans: 1
-    transform_publish_period: 0.03 #if 0 never publishes odometry
-    map_update_interval: 0.5
-    publish_period_sec: 1.0
-    use_sim_time: false
+    throttle_scans: 4
+    transform_publish_period: 0.05 #if 0 never publishes odometry
+    map_update_interval: 2.0
+    publish_period_sec: 5.0
+    use_sim_time: true
     resolution: 0.05
-    min_laser_range: 0.0 #for rastering images
-    max_laser_range: 20.0 #for rastering images
-    minimum_time_interval: 0.5
-    transform_timeout: 0.5
-    tf_buffer_duration: 30.
+    min_laser_range: 0.1 #for rastering images
+    max_laser_range: 60.0 #for rastering images
+    minimum_time_interval: 0.0
+    transform_timeout: 4.0
+    tf_buffer_duration: 120.0
     stack_size_to_use: 40000000 #// program needs a larger stack size to serialize large maps
     enable_interactive_mode: true
 
     # General Parameters
     use_scan_matching: true
+    use_pose_extrapolator: true
     use_scan_barycenter: true
     minimum_travel_distance: 0.5
     minimum_travel_heading: 0.5
@@ -76,3 +83,5 @@ slam_toolbox:
     minimum_angle_penalty: 0.9
     minimum_distance_penalty: 0.5
     use_response_expansion: true
+
+

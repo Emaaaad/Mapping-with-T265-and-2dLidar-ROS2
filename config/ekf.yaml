@@ -1,19 +1,26 @@
 ekf_filter_node:
   ros__parameters:
+    use_sim_time: true
     frequency: 30.0
     sensor_timeout: 0.2
     two_d_mode: true
+
+    # publish map→odom and odom→base_link
     publish_tf: true
-    map_frame: map
+ #  map_frame: map
     odom_frame: odom
-    base_link_frame: base_link
+    base_link_frame: base_link         
     world_frame: odom
-    predict_to_current_time: false   
-    
-    odom0: /odom/sample
-    odom0_config: [true, true, false,
-                       false, false, true,
-                       false, false, false,
-                       false, false, true,
-                       false, false, false]
+
+    predict_to_current_time: false
+    publish_acceleration: false
+
+    # odometry source from the bagsource install/setup.bash
+    odom0: /kiss/odometry           # topic that really has data
     odom0_queue_size: 10
+    odom0_config: [true, true, false,
+                   false, false, true,
+                   false, false, false,
+                   false, false, true,
+                   false, false, false]
+
